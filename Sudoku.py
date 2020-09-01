@@ -1,39 +1,16 @@
 import random
-from random import seed
-from random import randint
-import time
-global mat
+
+
 SIZE = 9
 
 #creating a grid 9 by 9 , with value 0 in each cell#
 def create_grid():
-    global mat
-    mat= [[0 for x in range(SIZE)] for y in range(SIZE)] 
-    for i in range(SIZE):
-        for j in range(SIZE):
-            mat[i][j]=0
-    return mat
-
-
-#return True if the number doest exsit in the row#
-def check_row(row,column,number):
-    global mat
-    for i in range(SIZE):
-
-        if(number==mat[row][i]):      
-            return False
-
-    return True
-
-#return True if the number doest exsit in the column#
-def check_column(row,column,number):
-    global mat
-    for i in range(SIZE):
     
-        if(number==mat[i][column]):
-            return False
-    return True
-        
+    matt= [[0 for row_i in range(SIZE)] for column_j in range(SIZE)] 
+    for row_i in range(SIZE):
+        for column_j in range(SIZE):
+            matt[row_i][column_j]=0
+    return matt
 
 #return the section, anumber between 1-3#
 def get_section(number):
@@ -48,150 +25,235 @@ def get_section(number):
         return 6,9
 
 #check if we have the same number in the box [(3*3) grid]#        
-def check_box(row,column,number):
-    global mat
+def fill_box(mat,row,column):
+    
     start_row,end_row = get_section(row)
     start_column,end_column = get_section(column)
+    numbers=[1,2,3,4,5,6,7,8,9]
+    random.shuffle(numbers)
+    count=0
+    for row_i in range(start_row,end_row):
+        for column_j in range(start_column,end_column):
+            mat[row_i][column_j] =numbers[count]
+            count+=1
 
-    for i in range(start_row,end_row):
-        for j in range(start_column,end_column):
-            if(number==mat[i][j]):
-                return False
-    return True
-
-
-#return True if we can add the number to the board or False if we cant#
-def add_number(row,column,number):
-    global mat
-    if((number>0 and number<=9)and check_box(row,column,number)==True and check_column(row,column,number)==True and check_row(row,column,number)==True):
-        return True
-    return False
-
-def create_solution():
-    global mat
-    for i in range(SIZE):
-        for j in range(SIZE):
-
-            if(mat[i][j]==0):
-                for num in range(1,SIZE+1):
-                
-                    if(add_number(i,j,num)):
-
-                        mat[i][j]=num
-                        if(valid_solution()==True):
-                            return mat
-                        create_solution()
-                        mat[i][j]=0 #backtraking
-                return  #if we can't solve the puzzle#
+def fill_all_boxes(mat):
     
-    return            
-         
+    for row in range(0,SIZE,3):
+        for column in range(0,SIZE,3):
+            fill_box(mat,row,column)
 
-def create_board():
-    global mat
-    i=random.randint(0,SIZE-1)
-    j =random.randint(0,SIZE-1)
-    count=1
-    while(board_is_empty()==True and count <=15):
-        if(mat[i][j]==0):
-                num=random.randint(1,SIZE)
-                if(add_number(i,j,num)):
-                    mat[i][j]=num
-                    count+=1
-        i=random.randint(0,SIZE-1)
-        j =random.randint(0,SIZE-1)
+def sorting_row(mat,row,column,sorted_mat):
+    
+    checked=[0,0,0,0,0,0,0,0,0]   #array that saved if the numbers appered in the row than it will changed in the array to 1 in the position of the number #
+    for column_j in range(0,SIZE):
+        num=mat[row][column_j]
         
-    return        
+        if(checked[num-1]==0):#if the number doesnt registered , so we register him #
+            checked[num-1]=1
+            sorted_mat[row][column_j]=1
+        else:#if the number registerd we searching for unregisterd number in his box (3*3) for unregisterd number# 
+    
+                new_num,new_row,new_column=find_num_in_cell_to_row(mat,row,column_j,checked,num,sorted_mat)
 
-def valid_solution():
-    global mat
-    if(board_is_empty()==True):
-        return False
-    for i in range(SIZE):
-            for j in range(SIZE):
-                for num in range(1,SIZE+1):
+                if(new_num==0):#if we didnt found unregisterd number we go for the first instance of the duplicated number#
+                    sorted_mat[row][column_j]=1
+                    #go back to the first duplicated number and try to swap him #
+                    for column_j in range(0,SIZE):
 
-                    if(add_number(i,j,num)==True):
-                        break
-                    else:
-                        return False
-    return True
+                        if(mat[row][column_j]==num):#searching for the first instance of the duplicated numbers#
+                            sorted_mat[row][column_j]=0 #searching for unregisterd number to swap them #
+                            new_num,new_row,new_column=find_num_in_cell_to_row(mat,row,column_j,checked,num,sorted_mat)
+                            
+
+                            if(new_num!=0):
+                                #sorted_mat[new_row][new_column]=2+row#
+                                swap_numbers(mat,row,column_j,new_row,new_column)
+                                checked[new_num-1]=1
+                                sorted_mat[row][column_j]=1
+                            else:
+                                if(row%3!=2):
+                                    PAS_row(mat,row,column_j,checked,num,sorted_mat)
+                            break
+
+                else:
+                    #sorted_mat[new_row][new_column]=2+row#
+                    swap_numbers(mat,row,column_j,new_row,new_column)
+                    checked[new_num-1]=1
+                    sorted_mat[row][column_j]=1
+                    
+                            
+def sorting_column(mat,row,column,sorted_mat):
+    
+    checked=[0,0,0,0,0,0,0,0,0]   # array that saved if the numbers appered in the row than it will changed in the array to 1 in the position of the number #
+    for row_i in range(0,SIZE):
+        num=mat[row_i][column]
+
+        if(checked[num-1]==0):#register the number #
+            checked[num-1]=1
+            if sorted_mat[row_i][column] == 0:
+                sorted_mat[row_i][column]=1
+        else:#if the number already registerd search for unregisterd number#
+           
+                new_num,new_row,new_column=find_num_in_cell_to_column(mat,row_i,column,checked,num,sorted_mat)
+
+                if(new_num==0):
+                    sorted_mat[row_i][column]=1
+                #go back to the first duplicated number and try to swap him #
+                    for row_i in range(0,SIZE):#searching for the duplicated instance#
+                       
+                        if(mat[row_i][column]==num):
+                            sorted_mat[row_i][column]=0 
+                            new_num,new_row,new_column=find_num_in_cell_to_column(mat,row_i,column,checked,num,sorted_mat)
+
+                            if(new_num!=0):
+                                #sorted_mat[new_row][new_column]=2+column#
+                                swap_numbers(mat,row_i,column,new_row,new_column)
+                                checked[new_num-1]=1
+                                sorted_mat[row_i][column]=1
+                            else : 
+                                if (column %3 !=2):
+                                    PAS_column(mat,row_i,column,checked,num,sorted_mat)
+                            break
+                          
+                else:
+                    #sorted_mat[new_row][new_column]=2+column#
+                    swap_numbers(mat,row_i,column,new_row,new_column)
+                    checked[new_num-1]=1
+                    sorted_mat[row_i][column]=1
+
+
+def find_num_in_cell_to_row(mat,row,column,checked,num,sorted_mat):
+    
+    starting_row,ending_row=get_section(row)
+    starting_column,ending_column=get_section(column)
+
+    for row_i in range(starting_row,ending_row):
+        for column_j in range(starting_column,ending_column):
+
+            if((sorted_mat[row_i][column_j]==0) and row_i !=row): #searchiong for unregisterd number#
+                num=mat[row_i][column_j]
+                if(checked[num-1]==0 ):
+                    return num,row_i,column_j
+
+    for row_i in range(row,ending_row):
+        num=mat[row_i][column]
+        #searching for registerd number in the column#
+        if(checked[num-1]==0 ):
+            return num,row_i,column
+    return 0,0,0
+
+def find_num_in_cell_to_column(mat,row,column,checked,num,sorted_mat):
+    
+    starting_row,ending_row=get_section(row)
+    starting_column,ending_column=get_section(column)
+
+    for column_j in range(starting_column,ending_column):
+        for row_i in range(starting_row,ending_row):
+
+            if(( sorted_mat[row_i][column_j]==0) and column !=column_j): 
+                num=mat[row_i][column_j]
+
+                if(checked[num-1]==0):
+                    return num,row_i,column_j
+
+    for column_j in range(column,ending_column):#search in the row that allready sorted#
+        num=mat[row][column_j]
+
+        if(checked[num-1]==0 ):
+            return num,row,column_j
+    return 0,0,0
+
+
+def swap_numbers(mat,old_row,old_column,new_row,new_column):
+    
+    tmp=mat[old_row][old_column]
+    mat[old_row][old_column]=mat[new_row][new_column]
+    mat[new_row][new_column]=tmp
+
+def PAS_row(mat,row,column,checked,num,sorted_mat):
+    count = 0 
+    last_column=9
+    while count < 18 and checked[num-1] != 0 : 
+        for column_j in range(SIZE-1):
+                if(mat[row][column_j]==num and last_column !=column_j):
+                    swap_numbers(mat,row,column_j,row+1,column_j)
+                    sorted_mat[row][column_j]=1
+                    num = mat[row][column_j]
+                    last_column = column_j
+                    count += 1
+                    break
+            
+    if checked[num-1] == 0:
+        checked[num-1]=1
+        sorted_mat[row][column_j]=1
+        return
+                
+    
+
+def PAS_column(mat,row,column,checked,num,sorted_mat):
+    count = 0 
+    last_row = 9
+    while count < 18 and checked[num-1] != 0 : 
+        for row_i in range(SIZE-1):
+                if(mat[row_i][column]==num and last_row !=row_i):
+                    swap_numbers(mat,row_i,column,row_i,column+1)
+                    checked[num-1]=1
+
+                    num = mat[row_i][column]
+                    last_row = row_i
+                    count += 1
+                    break
+    if checked[num-1] == 0:
+        checked[num-1]=1
+        sorted_mat[row_i][column]=1
+        return
+
+             
+          
+    
 
 
 
-
-
-#check if there free space in the board(0 is free)#
-def board_is_empty():
-    global mat
-    for i in range(SIZE):
-        for j in range(SIZE):
-            if(mat[i][j]==0):
-                return True
-    return False
-
-#priniting the matrix with the borders#
-def print_mat():
-    global mat
-    for i in range(SIZE):
-        if(i%3==0):
+def print_mat(mat):
+    
+    for row in range(SIZE):
+        if(row%3==0):
             print("-----------------------------------------")
 
-        for j in range(SIZE+1):
+        for column in range(SIZE+1):
 
-            if(j%3==0 ):
+            if(column%3==0 ):
                 print("||",end =" ")
 
             else:
                 print("|",end =" ")
 
-            if((i>=0 and i<SIZE)and (j>=0 and j<SIZE)):
-                if(mat[i][j]==0 or mat[i][j]==None):
+            if((row>=0 and row<SIZE)and (column>=0 and column<SIZE)):
+                if(mat[row][column]==0 or mat[row][column]==None):
                     print(" ",end =" ")
                 else:
-                    print((mat[i][j]) ,end =" ")
+                    print((mat[row][column]) ,end =" ")
 
         print(" ")
         
     print("-----------------------------------------")
-    
-
-def remove_cells():
-    global mat
-    count=30
-    while(count>0):
-        i=random.randint(0,SIZE-1)
-        j =random.randint(0,SIZE-1)
-        if(mat[i][j]!=0):
-            mat[i][j]=0
-            count-=1
-    return mat
-
 
 def main():
-        count_failed=0
-        count_succsed=0
-        count=0
-        start_time = time.time()
+    
+    mat=create_grid()
+    sorted_mat=create_grid()
+    fill_all_boxes(mat)
+    print_mat(mat)
+    print("---------#############-----------")
+    for i in range(9):
+       print("run number :",i)
+       sorting_row(mat,i,i,sorted_mat)
+       sorting_column(mat,i,i,sorted_mat)
+       print_mat(mat)
+       print("---------#############-----------")
+   
 
-        create_grid()
-        create_board()
-        print_mat()
-        create_solution()
-        count+=1
-        ##print_mat(mat)
-        ##mat=remove_cells(mat)
-        ##print_mat(mat)
-        ##mat= create_solution(mat)
-        ##print_mat(mat)
-        if(valid_solution()==False):
-            print("No solution")
-            count_failed+=1
-        else:
-            count_succsed+=1
-            print("The Solution is : ")
-            print_mat(mat)
-        print("--- %s seconds ---" % (time.time() - start_time))
-        print("failed ",count_failed,"succsed",count_succsed,"count",count)
+
 
 main()
