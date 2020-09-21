@@ -1,6 +1,5 @@
 import random
 
-
 SIZE = 9
 
 #creating a grid 9 by 9 , with value 0 in each cell#
@@ -53,8 +52,10 @@ def sorting_row(mat,row,column,sorted_mat):
             checked[num-1]=1
             sorted_mat[row][column_j]=1
         else:#if the number registerd we searching for unregisterd number in his box (3*3) for unregisterd number# 
-    
-                new_num,new_row,new_column=find_num_in_cell_to_row(mat,row,column_j,checked,num,sorted_mat)
+                if(sorted_mat[row][column_j]==0):
+                    new_num,new_row,new_column=find_num_in_cell_to_row(mat,row,column_j,checked,num,sorted_mat,0)
+                else:
+                    new_num,new_row,new_column=find_num_in_cell_to_row(mat,row,column_j,checked,num,sorted_mat,1)
 
                 if(new_num==0):#if we didnt found unregisterd number we go for the first instance of the duplicated number#
                     sorted_mat[row][column_j]=1
@@ -62,8 +63,12 @@ def sorting_row(mat,row,column,sorted_mat):
                     for column_j in range(0,SIZE):
 
                         if(mat[row][column_j]==num):#searching for the first instance of the duplicated numbers#
-                            sorted_mat[row][column_j]=0 #searching for unregisterd number to swap them #
-                            new_num,new_row,new_column=find_num_in_cell_to_row(mat,row,column_j,checked,num,sorted_mat)
+                            
+                             #searching for unregisterd number to swap them #
+                            if(column_j<=column):
+                                new_num,new_row,new_column=find_num_in_cell_to_row(mat,row,column_j,checked,num,sorted_mat,1)
+                            else:    
+                                new_num,new_row,new_column=find_num_in_cell_to_row(mat,row,column_j,checked,num,sorted_mat,0)
                             
 
                             if(new_num!=0):
@@ -94,8 +99,10 @@ def sorting_column(mat,row,column,sorted_mat):
             if sorted_mat[row_i][column] == 0:
                 sorted_mat[row_i][column]=1
         else:#if the number already registerd search for unregisterd number#
-           
-                new_num,new_row,new_column=find_num_in_cell_to_column(mat,row_i,column,checked,num,sorted_mat)
+                if(sorted_mat[row_i][column] == 0):
+                    new_num,new_row,new_column=find_num_in_cell_to_column(mat,row_i,column,checked,num,sorted_mat,0)
+                else:
+                    new_num,new_row,new_column=find_num_in_cell_to_column(mat,row_i,column,checked,num,sorted_mat,1)
 
                 if(new_num==0):
                     sorted_mat[row_i][column]=1
@@ -103,8 +110,10 @@ def sorting_column(mat,row,column,sorted_mat):
                     for row_i in range(0,SIZE):#searching for the duplicated instance#
                        
                         if(mat[row_i][column]==num):
-                            sorted_mat[row_i][column]=0 
-                            new_num,new_row,new_column=find_num_in_cell_to_column(mat,row_i,column,checked,num,sorted_mat)
+                            if(row_i<=row):
+                                new_num,new_row,new_column=find_num_in_cell_to_column(mat,row_i,column,checked,num,sorted_mat,1)
+                            else:
+                                new_num,new_row,new_column=find_num_in_cell_to_column(mat,row_i,column,checked,num,sorted_mat,0)
 
                             if(new_num!=0):
                                 #sorted_mat[new_row][new_column]=2+column#
@@ -123,45 +132,45 @@ def sorting_column(mat,row,column,sorted_mat):
                     sorted_mat[row_i][column]=1
 
 
-def find_num_in_cell_to_row(mat,row,column,checked,num,sorted_mat):
+def find_num_in_cell_to_row(mat,row,column,checked,num,sorted_mat,state):
     
     starting_row,ending_row=get_section(row)
     starting_column,ending_column=get_section(column)
+    if(state==0):
+        for row_i in range(starting_row,ending_row):
+            for column_j in range(starting_column,ending_column):
 
-    for row_i in range(starting_row,ending_row):
-        for column_j in range(starting_column,ending_column):
-
-            if((sorted_mat[row_i][column_j]==0) and row_i !=row): #searchiong for unregisterd number#
-                num=mat[row_i][column_j]
-                if(checked[num-1]==0 ):
-                    return num,row_i,column_j
-
+                if((sorted_mat[row_i][column_j]==0) and row_i !=row): #searchiong for unregisterd number#
+                    tmp_num=mat[row_i][column_j]
+                    if(checked[tmp_num-1]==0 ):
+                        return tmp_num,row_i,column_j
+   
     for row_i in range(row,ending_row):
-        num=mat[row_i][column]
+            tmp_num=mat[row_i][column]
         #searching for registerd number in the column#
-        if(checked[num-1]==0 ):
-            return num,row_i,column
+            if(checked[tmp_num-1]==0 and sorted_mat[row_i][column]==1):
+                return tmp_num,row_i,column
     return 0,0,0
 
-def find_num_in_cell_to_column(mat,row,column,checked,num,sorted_mat):
+def find_num_in_cell_to_column(mat,row,column,checked,num,sorted_mat,state):
     
     starting_row,ending_row=get_section(row)
     starting_column,ending_column=get_section(column)
+    if(state==0):
+        for column_j in range(starting_column,ending_column):
+            for row_i in range(starting_row,ending_row):
 
-    for column_j in range(starting_column,ending_column):
-        for row_i in range(starting_row,ending_row):
+                if(( sorted_mat[row_i][column_j]==0) and column !=column_j): 
+                    tmp_num=mat[row_i][column_j]
 
-            if(( sorted_mat[row_i][column_j]==0) and column !=column_j): 
-                num=mat[row_i][column_j]
-
-                if(checked[num-1]==0):
-                    return num,row_i,column_j
+                    if(checked[tmp_num-1]==0):
+                        return tmp_num,row_i,column_j
 
     for column_j in range(column,ending_column):#search in the row that allready sorted#
-        num=mat[row][column_j]
+        tmp_num=mat[row][column_j]
 
-        if(checked[num-1]==0 ):
-            return num,row,column_j
+        if(checked[tmp_num-1]==0 and sorted_mat[row][column_j]==1 ):
+            return tmp_num,row,column_j
     return 0,0,0
 
 
@@ -178,6 +187,7 @@ def PAS_row(mat,row,column,checked,num,sorted_mat):
         for column_j in range(SIZE-1):
                 if(mat[row][column_j]==num and last_column !=column_j):
                     swap_numbers(mat,row,column_j,row+1,column_j)
+
                     sorted_mat[row][column_j]=1
                     num = mat[row][column_j]
                     last_column = column_j
@@ -195,11 +205,10 @@ def PAS_column(mat,row,column,checked,num,sorted_mat):
     count = 0 
     last_row = 9
     while count < 18 and checked[num-1] != 0 : 
-        for row_i in range(SIZE-1):
+        for row_i in range(SIZE):
                 if(mat[row_i][column]==num and last_row !=row_i):
                     swap_numbers(mat,row_i,column,row_i,column+1)
-                    checked[num-1]=1
-
+                    sorted_mat[row_i][column]=1
                     num = mat[row_i][column]
                     last_row = row_i
                     count += 1
@@ -212,8 +221,32 @@ def PAS_column(mat,row,column,checked,num,sorted_mat):
              
           
     
+def check_numbers(mat,row,column):
+    checked_row=[0,0,0,0,0,0,0,0,0]
+    checked_column=[0,0,0,0,0,0,0,0,0]
+    for i in range(SIZE):
+        if(checked_row[mat[row][i]-1]==0):
+            checked_row[mat[row][i]-1]=1
+        else:
+            ##print("###ERROR### - same number in row")
+            return 0
+        if(checked_column[mat[i][column]-1]==0):
+            checked_column[mat[i][column]-1]=1
+        else:
+            ##print("###ERROR### - same number in column")
+            return 0
+    ##print("OK")
+    return 1
 
+def check_numbers_mat(mat):
+    count=0
 
+    for i in range(9):
+        count=count+check_numbers(mat,i,i)
+    if count == 9:
+        return 1
+    else:
+        return 0
 
 def print_mat(mat):
     
@@ -240,18 +273,21 @@ def print_mat(mat):
     print("-----------------------------------------")
 
 def main():
-    
-    mat=create_grid()
-    sorted_mat=create_grid()
-    fill_all_boxes(mat)
-    print_mat(mat)
-    print("---------#############-----------")
-    for i in range(9):
-       print("run number :",i)
-       sorting_row(mat,i,i,sorted_mat)
-       sorting_column(mat,i,i,sorted_mat)
-       print_mat(mat)
-       print("---------#############-----------")
+        mat=create_grid()
+        sorted_mat=create_grid()
+        fill_all_boxes(mat)
+   
+
+        print_mat(mat)
+        print("---------#############-----------")
+        for i in range(9):
+            print("run number :",i)
+            sorting_row(mat,i,i,sorted_mat)
+            sorting_column(mat,i,i,sorted_mat)
+            check_numbers(mat,i,i)
+            print_mat(mat)
+            print("---------#############-----------")
+        print(check_numbers_mat(mat))
    
 
 
